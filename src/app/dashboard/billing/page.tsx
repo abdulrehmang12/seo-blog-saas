@@ -29,14 +29,15 @@ export default function BillingPage() {
         return;
       }
 
-      const data = await res.json();
+      const data = await res.json() as { url?: string };
       if (data.url) {
         window.location.href = data.url;
       } else {
         setSubscriptionError("No checkout URL received. Please try again.");
       }
-    } catch (err: any) {
-      setSubscriptionError(err.message || "Network error. Please check your connection.");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Network error. Please check your connection.";
+      setSubscriptionError(errorMessage);
     } finally {
       setLoading(false);
     }

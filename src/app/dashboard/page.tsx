@@ -11,7 +11,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 className="heading-1" style={{ fontSize: '2.25rem', marginBottom: '0.25rem' }}>Dashboard</h1>
-          <p style={{ color: '#94a3b8' }}>Welcome back, {user?.email?.split('@')[0]}! Here's what's happening today.</p>
+          <p style={{ color: '#94a3b8' }}>Welcome back, {user?.email?.split('@')[0]}! Here&apos;s what&apos;s happening today.</p>
         </div>
         <Link href="/dashboard/generate" className="btn-primary">
           <FileText size={18} /> New Blog Post

@@ -1,10 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Sparkles, LayoutDashboard, PenTool, CreditCard, LogOut, Settings, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase";
+import { auth, isMock } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -13,9 +13,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
   const handleSignOut = async () => {
     try {
-      if (auth) {
+      if (!isMock) {
         await signOut(auth);
       } else {
         signOutMock();
@@ -29,7 +35,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading) return <div className="auth-container"><Sparkles className="text-primary animate-pulse" size={50} /></div>;
 
   if (!user) {
-    if (typeof window !== 'undefined') router.push("/login");
     return null;
   }
 

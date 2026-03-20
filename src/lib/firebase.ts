@@ -14,8 +14,26 @@ const firebaseConfig = {
 const isMock = firebaseConfig.apiKey === "mock-api-key";
 
 let app: FirebaseApp | undefined;
-let auth: Auth | any;
-let db: Firestore | any;
+let auth: Auth | MockAuth;
+let db: Firestore | MockFirestore;
+
+interface MockAuth {
+  currentUser: null;
+  onAuthStateChanged: (cb: (user: unknown) => void) => () => void;
+  signInWithEmailAndPassword: () => Promise<{ user: { uid: string } }>;
+  createUserWithEmailAndPassword: () => Promise<{ user: { uid: string } }>;
+  signOut: () => Promise<void>;
+}
+
+interface MockFirestore {
+  collection: () => {
+    doc: () => {
+      set: () => Promise<void>;
+      get: () => Promise<{ exists: () => boolean; data: () => { plan: string } }>;
+    };
+    add: () => Promise<{ id: string }>;
+  };
+}
 
 if (typeof window !== "undefined" && !getApps().length && !isMock) {
   app = initializeApp(firebaseConfig);
@@ -25,11 +43,11 @@ if (typeof window !== "undefined" && !getApps().length && !isMock) {
   // Mock Firebase for UI preview
   auth = {
     currentUser: null,
-    onAuthStateChanged: (cb: any) => { cb(null); return () => {}; },
+    onAuthStateChanged: (cb: (user: unknown) => void) => { cb(null); return () => {}; },
     signInWithEmailAndPassword: async () => ({ user: { uid: 'mock-user' } }),
     createUserWithEmailAndPassword: async () => ({ user: { uid: 'mock-user' } }),
     signOut: async () => {}
-  };
+  } as unknown as Auth;
   db = {
     collection: () => ({
       doc: () => ({
@@ -38,7 +56,7 @@ if (typeof window !== "undefined" && !getApps().length && !isMock) {
       }),
       add: async () => ({ id: 'mock-doc' })
     })
-  };
+  } as unknown as Firestore;
 }
 
 export { app, auth, db, isMock };

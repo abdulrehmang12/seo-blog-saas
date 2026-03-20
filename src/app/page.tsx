@@ -41,7 +41,7 @@ export default function HomePage() {
           <div className="card">
             <Zap className="text-primary" size={40} style={{ marginBottom: '1rem' }} />
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Instant Generation</h3>
-            <p style={{ color: '#94a3b8' }}>No more writer's block. Turn keywords into thousands of words of high-quality copy in seconds.</p>
+            <p style={{ color: '#94a3b8' }}>No more writer&apos;s block. Turn keywords into thousands of words of high-quality copy in seconds.</p>
           </div>
           <div className="card">
             <ShieldCheck className="text-primary" size={40} style={{ marginBottom: '1rem' }} />

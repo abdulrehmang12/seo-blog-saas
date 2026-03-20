@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
-import { User, Lock, Mail, Bell } from "lucide-react";
+import { User, Lock, Bell } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth();

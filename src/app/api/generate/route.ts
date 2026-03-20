@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const VALID_TONES = ["Professional", "Conversational", "Persuasive", "Humorous"] as const;
 type Tone = typeof VALID_TONES[number];
@@ -22,9 +22,7 @@ const MOCK_TEMPLATES: Record<Tone, (keyword: string) => string> = {
     `# The Surprisingly Hilarious Truth About ${keyword}\n\n## Plot Twist: This Actually Matters\nYou clicked on an article about ${keyword}. Either you're very dedicated or you lost a bet. Either way, welcome!\n\n## Why ${keyword} Is Low-Key Amazing\nLook, nobody wakes up thinking "I can't wait to learn about ${keyword}" — and yet here we are, and honestly? It's pretty great.\n\n### Things ${keyword} Will Do For You:\n- **Traffic:** Your site goes from ghost town to bustling metropolis.\n- **Time Savings:** More time for coffee. You're welcome.\n- **Bragging Rights:** Drop "${keyword}" in meetings and watch heads nod.\n\n## The Moral of the Story\n${keyword} is the underrated hero you didn't know you needed. Give it a chance — it won't let you down.`,
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "dummy",
-});
+const genai = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_GENAI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid tone value" }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "dummy") {
+    if (!process.env.NEXT_PUBLIC_GOOGLE_GENAI_API_KEY) {
       // Mock generation if missing API key for aesthetic demo
       await new Promise(res => setTimeout(res, 2500));
       return NextResponse.json({
@@ -53,19 +51,18 @@ export async function POST(req: Request) {
       });
     }
 
-    const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert SEO content strategist and writer. Generate a highly optimized blog post for the primary keyword provided. Use markdown, proper heading structure (H1, H2, H3), lists, and keep the tone ${tone}.`,
-        },
-        { role: "user", content: `Write a 600-word blog post about: ${keyword}` },
-      ],
-      model: "gpt-4",
-    });
+    const model = genai.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    const prompt = `You are an expert SEO content strategist and writer. Generate a highly optimized blog post for the primary keyword provided. Use markdown, proper heading structure (H1, H2, H3), lists, and keep the tone ${tone}.
 
-    return NextResponse.json({ content: completion.choices[0].message.content });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+Write a 600-word blog post about: ${keyword}`;
+
+    const result = await model.generateContent(prompt);
+    const content = result.response.text();
+
+    return NextResponse.json({ content });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

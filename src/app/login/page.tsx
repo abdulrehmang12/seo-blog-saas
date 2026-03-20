@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
@@ -28,8 +28,13 @@ export default function LoginPage() {
   const { signInMock, user } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
   if (user) {
-    if (typeof window !== "undefined") router.push("/dashboard");
     return null;
   }
 
@@ -57,8 +62,10 @@ export default function LoginPage() {
         }
       }
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(FIREBASE_ERROR_MESSAGES[err.code] || err.message || "An unexpected error occurred.");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
+      const errorCode = err instanceof Error && 'code' in err ? (err as { code: string }).code : '';
+      setError(FIREBASE_ERROR_MESSAGES[errorCode] || errorMessage);
     } finally {
       setLoading(false);
     }
