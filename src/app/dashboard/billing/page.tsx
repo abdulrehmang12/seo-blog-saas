@@ -3,24 +3,40 @@ import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
+const STRIPE_PRICES = {
+  PRO: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || "price_pro_mock",
+  AGENCY: process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY || "price_agency_mock",
+};
+
 export default function BillingPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
 
   const handleSubscribe = async (priceId: string) => {
     setLoading(true);
+    setSubscriptionError("");
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        setSubscriptionError(errData.error || "Checkout failed. Please try again.");
+        return;
+      }
+
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        setSubscriptionError("No checkout URL received. Please try again.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setSubscriptionError(err.message || "Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -30,6 +46,29 @@ export default function BillingPage() {
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <h1 className="heading-1" style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Billing & Subscriptions</h1>
       <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>Manage your subscription plan and payment details.</p>
+
+      {subscriptionError && (
+        <div style={{
+          color: '#ef4444',
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          padding: '0.75rem 1rem',
+          borderRadius: 'var(--radius)',
+          marginBottom: '1.5rem',
+          fontSize: '0.875rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span>{subscriptionError}</span>
+          <button
+            onClick={() => setSubscriptionError("")}
+            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 600, marginLeft: '1rem' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       <div style={{ padding: '1.5rem', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: 'var(--radius)', marginBottom: '3rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>Current Plan: <strong>{user?.plan?.toUpperCase() || 'FREE'}</strong></h3>
@@ -57,7 +96,7 @@ export default function BillingPage() {
           <button 
             className="btn-primary" 
             style={{ width: '100%', marginTop: 'auto' }}
-            onClick={() => handleSubscribe('price_pro_mock')}
+            onClick={() => handleSubscribe(STRIPE_PRICES.PRO)}
             disabled={loading}
           >
             {loading ? <Loader2 className="animate-spin" /> : "Upgrade to Pro"}
@@ -80,7 +119,7 @@ export default function BillingPage() {
           <button 
             className="btn-secondary" 
             style={{ width: '100%', marginTop: 'auto' }}
-            onClick={() => handleSubscribe('price_agency_mock')}
+            onClick={() => handleSubscribe(STRIPE_PRICES.AGENCY)}
             disabled={loading}
           >
             {loading ? <Loader2 className="animate-spin" /> : "Select Agency"}
