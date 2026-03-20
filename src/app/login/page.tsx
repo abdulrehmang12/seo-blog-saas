@@ -6,6 +6,19 @@ import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, isMock } from "@/lib/firebase";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
+  "auth/email-already-in-use": "This email is already registered. Try logging in.",
+  "auth/invalid-credential": "Invalid email or password.",
+  "auth/wrong-password": "Invalid email or password.",
+  "auth/user-not-found": "No account found with this email.",
+  "auth/weak-password": "Password must be at least 6 characters.",
+  "auth/invalid-email": "The email address format is not recognized by the server.",
+  "auth/operation-not-allowed": "Email/password login is currently disabled.",
+  "auth/too-many-requests": "Too many attempts. Please try again later.",
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +38,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    const emailRegex = EMAIL_REGEX;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isMock) {
         await new Promise(res => setTimeout(res, 1000));
@@ -38,13 +58,7 @@ export default function LoginPage() {
       }
       router.push("/dashboard");
     } catch (err: any) {
-      if (err.code === "auth/email-already-in-use") {
-         setError("This email is already taken. Try logging in.");
-      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-         setError("Invalid email or password.");
-      } else {
-         setError(err.message || "An unexpected error occurred.");
-      }
+      setError(FIREBASE_ERROR_MESSAGES[err.code] || err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
